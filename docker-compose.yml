@@ -1,5 +1,21 @@
 version: "3.8"
 services:
+  init:
+    image: alpine:latest
+    volumes:
+      - ./:/source:ro
+      - slides-html:/target
+    command: >
+      sh -c "
+      echo 'Copying website files from Git repo...';
+      cp -f /source/*.html /target/ 2>/dev/null || true;
+      cp -f /source/*.json /target/ 2>/dev/null || true;
+      cp -f /source/*.js /target/ 2>/dev/null || true;
+      cp -f /source/*.md /target/ 2>/dev/null || true;
+      echo 'Website files copied successfully'
+      "
+    restart: "no"
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -8,7 +24,8 @@ services:
     volumes:
       - slides-html:/usr/share/nginx/html
     depends_on:
-      - slideshow-generator
+      init:
+        condition: service_completed_successfully
 
   sftp:
     image: atmoz/sftp
@@ -25,11 +42,12 @@ services:
     working_dir: /app
     volumes:
       - slides-html:/app
-      - ./generate-slideshows.js:/app/generate-slideshows.js:ro
-      - ./watch-and-generate.js:/app/watch-and-generate.js:ro
     command: node /app/watch-and-generate.js
     environment:
       - NODE_ENV=production
+    depends_on:
+      init:
+        condition: service_completed_successfully
 
 volumes:
   slides-html: {}
