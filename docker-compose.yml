@@ -8,10 +8,12 @@ services:
     command: >
       sh -c "
       echo 'Copying website files from Git repo...';
-      cp -f /source/*.html /target/ 2>/dev/null || true;
-      cp -f /source/*.json /target/ 2>/dev/null || true;
-      cp -f /source/*.js /target/ 2>/dev/null || true;
-      cp -f /source/*.md /target/ 2>/dev/null || true;
+      cp -v /source/*.html /target/ 2>/dev/null || true;
+      cp -v /source/*.json /target/ 2>/dev/null || true;
+      cp -v /source/*.js /target/ 2>/dev/null || true;
+      cp -v /source/*.md /target/ 2>/dev/null || true;
+      echo 'Files copied. Listing target directory:';
+      ls -la /target/*.js;
       echo 'Website files copied successfully'
       "
     restart: "no"
