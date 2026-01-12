@@ -44,7 +44,8 @@ services:
     working_dir: /app
     volumes:
       - slides-html:/app
-    command: node /app/watch-and-generate.js
+      - ./start-watcher.sh:/start-watcher.sh:ro
+    command: sh /start-watcher.sh
     environment:
       - NODE_ENV=production
     depends_on:
