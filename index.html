@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Slideshow Collection</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007ACC">
+    <meta name="description" content="Interactive Presentation Collection">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .slideshows-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .slideshow-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .slideshow-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .slideshow-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .slideshow-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .slideshow-description {
+            color: #718096;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .no-slideshows {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.1);
+            padding: 2rem;
+            border-radius: 12px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .slideshows-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Slideshow Collection</h1>
+        <div id="slideshows" class="slideshows-grid">
+            <div class="loading">Loading slideshows...</div>
+        </div>
+    </div>
+
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service Worker registered:', reg);
+            }).catch(err => {
+                console.log('Service Worker registration failed:', err);
+            });
+        }
+
+        function createSlideshowCard(slideshow) {
+            const card = document.createElement('a');
+            card.className = 'slideshow-card';
+            card.href = `${slideshow.folder}/index.html`;
+
+            card.innerHTML = `
+                <div class="slideshow-icon">${slideshow.icon}</div>
+                <div class="slideshow-title">${slideshow.title}</div>
+                <div class="slideshow-description">${slideshow.description}</div>
+            `;
+
+            return card;
+        }
+
+        async function loadSlideshows() {
+            const container = document.getElementById('slideshows');
+
+            try {
+                const response = await fetch('slideshows.json');
+
+                if (!response.ok) {
+                    throw new Error('Failed to load slideshows.json');
+                }
+
+                const slideshows = await response.json();
+
+                if (slideshows.length === 0) {
+                    container.innerHTML = '<div class="no-slideshows">No slideshows found. Run generate-slideshows.js to discover slideshows.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                slideshows.forEach(slideshow => {
+                    container.appendChild(createSlideshowCard(slideshow));
+                });
+            } catch (error) {
+                console.error('Error loading slideshows:', error);
+                container.innerHTML = '<div class="no-slideshows">Error loading slideshows. Make sure to run: node generate-slideshows.js</div>';
+            }
+        }
+
+        // Load slideshows when page loads
+        document.addEventListener('DOMContentLoaded', loadSlideshows);
+    </script>
+</body>
+</html>

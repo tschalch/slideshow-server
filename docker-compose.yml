@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - 8881:80
+    volumes:
+      - slides-html:/usr/share/nginx/html
+    depends_on:
+      - slideshow-generator
+
+  sftp:
+    image: atmoz/sftp
+    ports:
+      - "2222:22"
+    volumes:
+      - slides-html:/home/slides/upload
+    command: slides:Kx12*F%@Ap355Q9q%H2!:82:82
+    restart: unless-stopped
+
+  slideshow-generator:
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - slides-html:/app
+      - ./generate-slideshows.js:/app/generate-slideshows.js:ro
+      - ./watch-and-generate.js:/app/watch-and-generate.js:ro
+    command: node /app/watch-and-generate.js
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  slides-html: {}
