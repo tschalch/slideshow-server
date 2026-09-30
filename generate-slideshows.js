@@ -35,6 +35,40 @@ function generateIcon(folderName) {
     return 'SS';
 }
 
+// SFTP clients often preserve restrictive local modes (e.g. 600/700), which
+// leaves uploads unreadable for the nginx worker. Add world read (and traverse
+// for directories) bits without touching anything else.
+function makeReadable(targetPath) {
+    const stat = fs.lstatSync(targetPath);
+    if (stat.isSymbolicLink()) return;
+
+    const wanted = stat.mode | (stat.isDirectory() ? 0o755 : 0o644);
+    if ((stat.mode & 0o7777) !== (wanted & 0o7777)) {
+        fs.chmodSync(targetPath, wanted & 0o7777);
+        console.log(`Fixed permissions: ${targetPath}`);
+    }
+
+    if (stat.isDirectory()) {
+        for (const entry of fs.readdirSync(targetPath)) {
+            makeReadable(path.join(targetPath, entry));
+        }
+    }
+}
+
+function fixSlideshowPermissions() {
+    const items = fs.readdirSync(__dirname, { withFileTypes: true });
+
+    for (const item of items) {
+        if (item.isDirectory() && item.name.startsWith(SLIDESHOW_PREFIX)) {
+            try {
+                makeReadable(path.join(__dirname, item.name));
+            } catch (err) {
+                console.error(`Error fixing permissions for ${item.name}:`, err.message);
+            }
+        }
+    }
+}
+
 function discoverSlideshows() {
     const currentDir = __dirname;
     const items = fs.readdirSync(currentDir, { withFileTypes: true });
@@ -69,6 +103,8 @@ function discoverSlideshows() {
 function main() {
     console.log('Discovering slideshows...\n');
 
+    fixSlideshowPermissions();
+
     const slideshows = discoverSlideshows();
 
     console.log(`\nFound ${slideshows.length} slideshow(s)`);
@@ -79,4 +115,8 @@ function main() {
     console.log(`\nGenerated ${OUTPUT_FILE}`);
 }
 
-main();
+if (require.main === module) {
+    main();
+}
+
+module.exports = { fixSlideshowPermissions };

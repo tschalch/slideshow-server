@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const { fixSlideshowPermissions } = require('./generate-slideshows.js');
 
 const SLIDESHOW_PREFIX = '__Slideshow ';
 const WATCH_DIR = __dirname;
@@ -81,6 +82,9 @@ function watchDirectory() {
 
     // Periodically rescan for new folders
     setInterval(() => {
+        // Catch files uploaded after the last generator run
+        fixSlideshowPermissions();
+
         try {
             const items = fs.readdirSync(WATCH_DIR, { withFileTypes: true });
             items.forEach(item => {
