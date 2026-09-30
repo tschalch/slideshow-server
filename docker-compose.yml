@@ -35,7 +35,7 @@ services:
       - "2222:22"
     volumes:
       - slides-html:/home/slides/upload
-    command: slides:Kx12*F%@Ap355Q9q%H2!:82:82
+    command: slides:${SFTP_PASSWORD:?set SFTP_PASSWORD in .env}:82:82
     restart: unless-stopped
 
   slideshow-generator:
